@@ -12,7 +12,7 @@ func TestIsSubvolume(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%q", b)
+	t.Log(b)
 }
 
 func testingImage() (string, error) {
