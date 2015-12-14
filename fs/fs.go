@@ -1,4 +1,4 @@
-package btrfs
+package fs
 
 import (
 	"os"
@@ -16,4 +16,16 @@ func Mkfs(filepath ...string) error {
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	return cmd.Run()
+}
+
+// TruncateBtrfs is a convenience method to grow filename to size bytes
+func TruncateBtrfs(filename string, size int64) error {
+	fh, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0600)
+	if err != nil {
+		return err
+	}
+	if err := fh.Truncate(size); err != nil {
+		return err
+	}
+	return fh.Close()
 }
