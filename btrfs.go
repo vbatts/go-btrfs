@@ -93,6 +93,7 @@ func IsSubvolume(dirpath string) (bool, error) {
 	return bufStat.Ino == C.BTRFS_FIRST_FREE_OBJECTID, nil
 }
 
+// SubvolDelete deletes the subvolume of `name` with `dirpath` as the root directory.
 func SubvolDelete(dirpath, name string) error {
 	dir, err := openDir(dirpath)
 	if err != nil {
