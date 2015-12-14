@@ -144,11 +144,13 @@ func openNextAvailableLoopback(index int, sparseFile *os.File) (loopFile *os.Fil
 
 // AttachLoopDevice attaches the given sparse file to the next
 // available loopback device. It returns an opened *os.File.
+// The loopback file is set to autoclear after the returned file handle is closed.
 /*
  Example
 ```
 
 fh, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0600)
+
 if err != nil {
   return err
 }
@@ -156,11 +158,13 @@ if err != nil {
 if err := fh.Truncate(size); err != nil {
   return err
 }
+
 if err := fh.Close(); err != nil {
   return err
 }
 
 lHandle, err := loop.AttachLoopDevice(filename)
+
 if err != nil {
   return err
 }
