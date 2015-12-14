@@ -15,6 +15,7 @@ package btrfs
 import "C"
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -23,13 +24,22 @@ import (
 	"unsafe"
 )
 
-func SubvolCreate(path, name string) error {
-	dir, err := openDir(path)
+var (
+	// ErrorNameTooLong is returned if the name is longer than the default 255 characters
+	ErrorNameTooLong = errors.New("name length too long")
+)
+
+// SubvolCreate creates a new btrfs subvolume, with dirpath being the root directory
+func SubvolCreate(dirpath, name string) error {
+	dir, err := openDir(dirpath)
 	if err != nil {
 		return err
 	}
 	defer closeDir(dir)
 
+	if len(name) > C.BTRFS_NAME_LEN {
+		return ErrorNameTooLong
+	}
 	var args C.struct_btrfs_ioctl_vol_args
 	for i, c := range []byte(name) {
 		args.name[i] = C.char(c)
@@ -43,14 +53,16 @@ func SubvolCreate(path, name string) error {
 	return nil
 }
 
-func SubvolSnapshot(src, dest, name string) error {
-	srcDir, err := openDir(src)
+// SubvolSnapshot creates a new btrfs subvolume snapshot. With `dirpath` being
+// the root directory, make a snapshot of `srcdirpath`, with name `name`.
+func SubvolSnapshot(srcdirpath, dirpath, name string) error {
+	srcDir, err := openDir(srcdirpath)
 	if err != nil {
 		return err
 	}
 	defer closeDir(srcDir)
 
-	destDir, err := openDir(dest)
+	destDir, err := openDir(dirpath)
 	if err != nil {
 		return err
 	}
@@ -70,9 +82,10 @@ func SubvolSnapshot(src, dest, name string) error {
 	return nil
 }
 
-func IsSubvolume(p string) (bool, error) {
+// IsSubvolume tests whether path `dirpath` is a btrfs subvolume
+func IsSubvolume(dirpath string) (bool, error) {
 	var bufStat syscall.Stat_t
-	if err := syscall.Lstat(p, &bufStat); err != nil {
+	if err := syscall.Lstat(dirpath, &bufStat); err != nil {
 		return false, err
 	}
 
