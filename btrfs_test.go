@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"syscall"
 	"testing"
 
@@ -44,8 +45,22 @@ func TestSubvolume(t *testing.T) {
 	defer syscall.Unmount(tmpdir, 0)
 
 	for i := 0; i < 10; i++ {
-		if err := SubvolCreate(tmpdir, fmt.Sprintf("vol-%d", i)); err != nil {
-			t.Errorf("failed to create vol-%d : %s", i, err)
+		volname := fmt.Sprintf("vol-%d", i)
+		if err := SubvolCreate(tmpdir, volname); err != nil {
+			t.Errorf("failed to create %q: %s", volname, err)
+		}
+		for j := 0; j < 10; j++ {
+			snapname := fmt.Sprintf("%s-snap-%d", volname, j)
+			err := SubvolSnapshot(filepath.Join(tmpdir, volname), tmpdir, snapname)
+			if err != nil {
+				t.Errorf("failed to create %q: %s", snapname, err)
+			}
+			if err := SubvolDelete(tmpdir, snapname); err != nil {
+				t.Errorf("failed to delete %q: %s", snapname, err)
+			}
+		}
+		if err := SubvolDelete(tmpdir, volname); err != nil {
+			t.Errorf("failed to delete %q: %s", volname, err)
 		}
 	}
 }
